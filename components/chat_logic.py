@@ -1,6 +1,7 @@
 from shiny import ui
 from services.search_service import SearchLoader
-from langchain_groq import ChatGroq
+# from langchain_deepseek import ChatDeepSeek
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -39,9 +40,31 @@ def server(input, output, session):
         n_results = input.n_results()
         search_type = input.rag_type()
 
-        llm = ChatGroq(
-            temperature=temperature, model_name=selected_model, max_tokens=5000
+
+
+        # OpenAI API using langchain
+        llm = ChatOpenAI(
+            model="gpt-4o",
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            # api_key="...",  # if you prefer to pass api key in directly instaed of using env vars
+            # base_url="...",
+            # organization="...",
+            # other params...
         )
+
+        # Deepseek API using langchain
+        # llm = ChatDeepSeek(
+        #     model=selected_model,
+        #     temperature=0,
+        #     max_tokens=None,
+        #     timeout=None,
+        #     max_retries=2,
+        #     # other params...
+        # )
+
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
                 # Load and preproccess documents
