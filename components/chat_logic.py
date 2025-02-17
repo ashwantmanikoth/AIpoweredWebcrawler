@@ -70,13 +70,13 @@ def server(user_message, history, selected_model="gpt-4o", temperature=0.7, n_re
         location=Config.QDRANT_HOST,
         collection_name=Config.COLLECTION_NAME
     )
-
+    # Get retriever
     retriever = vectorstore.as_retriever()
 
     # Convert chat history to expected format
     chat_history = [user_message.content for user_message in truncate_chat_history(history)] if search_type == "Search" else []
 
-    # RAG Prompt
+    #Prompt for RAG Fusion and MultiQuery
     system_template = """Answer the following question based on this context:
     Make sure the output is in markdown format.
     {context}
@@ -89,9 +89,11 @@ def server(user_message, history, selected_model="gpt-4o", temperature=0.7, n_re
             ("human", "{question}")
         ]
     )
+    
+    template = """Generate multiple search queries related to: {question}"""
 
     if rag_type == "RAG Fusion": # RAG Fusion using reciprocal rank fusion
-        template = """Generate multiple search queries related to: {question}"""
+
         prompt_rag_fusion = ChatPromptTemplate.from_template(template)
 
         generate_queries = (
@@ -102,7 +104,7 @@ def server(user_message, history, selected_model="gpt-4o", temperature=0.7, n_re
         )
 
         retrieval_chain = generate_queries | retriever.map() | reciprocal_rank_fusion
-        print(retrieval_chain)
+
         final_rag_chain = (
             {"context": retrieval_chain,
             "question": itemgetter("question")}
@@ -111,8 +113,7 @@ def server(user_message, history, selected_model="gpt-4o", temperature=0.7, n_re
             | StrOutputParser()
         )
 
-    else:
-        template = """Generate multiple related search queries for {question}"""
+    else: # MultiQuery using unique union
         prompt_perspectives = ChatPromptTemplate.from_template(template)
 
         generate_queries = (

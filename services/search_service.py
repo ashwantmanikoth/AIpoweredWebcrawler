@@ -16,10 +16,10 @@ def search_query_generate_prompt(query):
     return f"""
         You are an intelligent assistant that helps users create search queries based on their input. When a user provides a query, your task is to identify relevant search queries that can be used for web searches. If the user’s query is too long or complex, break it down into multiple simpler search queries. 
         
-        Your output should always be in the following JSON format:
         {{
         "search_query": ["search1", "search2", ...]
         }}
+
         Make sure to maintain the specified format strictly and provide clear and concise search queries.
         User query: "{query}"
         """
@@ -34,21 +34,20 @@ def SearchLoader(query, num_results, llm):
               )]
     try:
         results = llm.invoke(messages).content
-        print("results: ", results)
     except Exception as e:
         raise RuntimeError(f"Error invoking LLM: {e}")
-
 
     try:
         # Extract and parse JSON from the raw LLM output
         json_text = extract_json_from_text(results)
         js = json.loads(json_text)
+        src_query = js["search_query"]
     except Exception as e:
         raise ValueError(f"Error extracting or decoding JSON from LLM output: {results}") from e
-    src_query = js["search_query"]
-
+    
     #Duckduckgo search API 
     # web_search = DuckDuckGoSearchResults(num_results=num_results)
+
     #google search uing SERP API
     web_search = GoogleSearchAPIWrapper(api_key=Config.SERP_API_KEY, max_results=num_results)
 
