@@ -86,7 +86,6 @@ def server(user_message, history, selected_model="gpt-4o", temperature=0.7, n_re
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_template),
-            MessagesPlaceholder("chat_history"),
             ("human", "{question}")
         ]
     )
