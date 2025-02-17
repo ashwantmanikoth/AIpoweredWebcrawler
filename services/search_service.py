@@ -12,7 +12,7 @@ def extract_json_from_text(text):
         return match.group()
     raise ValueError("No JSON content found in the provided text")
 
-def generate_prompt(query):
+def search_query_generate_prompt(query):
     return f"""
         You are an intelligent assistant that helps users create search queries based on their input. When a user provides a query, your task is to identify relevant search queries that can be used for web searches. If the user’s query is too long or complex, break it down into multiple simpler search queries. 
         
@@ -30,7 +30,7 @@ def SearchLoader(query, num_results, llm):
             "system", "You are a helpful assistant that returns output in json format"
          ),
           (
-              "human", generate_prompt(query)
+              "human", search_query_generate_prompt(query)
               )]
     try:
         results = llm.invoke(messages).content
