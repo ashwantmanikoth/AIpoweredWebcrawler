@@ -9,4 +9,4 @@ class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     QDRANT_HOST = os.getenv("QDRANT_HOST")
     COLLECTION_NAME = os.getenv("COLLECTION_NAME")
-
+    SERP_API_KEY = os.getenv("SERP_API_KEY")

@@ -1,6 +1,8 @@
-from utils.DuckDuckGo import DuckDuckGoSearchResults
-from langchain.schema import Document
 import json, re
+from utils.config import Config
+from duckduckgo_search.exceptions import RatelimitException
+from utils.GoogleSearchAPI import GoogleSearchAPIWrapper
+from langchain.schema import Document
 
 def extract_json_from_text(text):
     """Extract JSON part from a mixed text."""
@@ -45,14 +47,31 @@ def SearchLoader(query, num_results, llm):
         raise ValueError(f"Error extracting or decoding JSON from LLM output: {results}") from e
     src_query = js["search_query"]
 
-
-    web_search = DuckDuckGoSearchResults(num_results=num_results)
-    print("search result: ", web_search)
+    #Duckduckgo search API 
+    # web_search = DuckDuckGoSearchResults(num_results=num_results)
+    #google search uing SERP API
+    web_search = GoogleSearchAPIWrapper(api_key=Config.SERP_API_KEY, max_results=num_results)
 
     documents = []
     for qry in src_query:
-        res = web_search.invoke(qry)
-        document = Document(page_content=res)
-        documents.append(document)
+        try:
+            res = web_search.results(qry,max_results=num_results)
+
+            if isinstance(res, list):  # Ensure it's a list of search results
+                res_text = "\n".join(
+                    [f"{r.get('title', '')}: {r.get('snippet', '')}" for r in res]
+                )
+            else:
+                res_text = res  # If res is already a string
+
+            document = Document(page_content=res_text)
+
+            documents.append(document)
+        except RatelimitException:
+            print(f"Rate limit hit for query: {qry}. Skipping...")
+            continue  # Skip this query and proceed to the next one
+        except Exception as e:
+            print(f"Error searching for query '{qry}': {e}")
+            continue  # Skip this query and proceed to the next one    
 
     return documents, src_query
